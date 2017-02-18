@@ -610,37 +610,46 @@ func (v *Kiritan) InjectPhraseEntries(pEntries []string) error {
 	return nil
 }
 
+var (
+	instPhraseStart = []string{"((", "（（"}
+	instPhraseSep   = []string{"|", "｜"}
+	instPhraseEnd   = []string{"))", "））"}
+)
+
 func ExtractInstantPhrases(text string) (pEntries []string, after string, err error) {
 	var start int
 	for {
 		//log.Debug("text", text)
 		//log.Debug("start", start)
-		pos := start + strings.Index(text[start:], "（（")
+		spos, slen := indexAnyAry(text[start:], instPhraseStart)
+		pos := start + spos
 		if pos < start {
 			break
 		}
 		//log.Debug("pos", pos)
 
-		endpos := pos + strings.Index(text[pos:], "））")
+		epos, elen := indexAnyAry(text[pos:], instPhraseEnd)
+		endpos := pos + epos
 		if endpos < pos {
 			break
 		}
 		//log.Debug("endpos", endpos)
 
-		seppos := pos + strings.Index(text[pos:endpos], "｜")
+		seppos, seplen := indexAnyAry(text[pos:endpos], instPhraseSep)
+		seppos = pos + seppos
 		if seppos < pos {
 			start = endpos
 			continue
 		}
 		//log.Debug("seppos", seppos)
 
-		phrase := text[pos+len("（（") : seppos]
-		pronun := text[seppos+len("｜") : endpos]
+		phrase := text[pos+slen : seppos]
+		pronun := text[seppos+seplen : endpos]
 		//log.Debug("phrase, pronun", phrase, pronun)
-		pEntries = append(pEntries, phrase+"="+pronun)
+		pEntries = append(pEntries, strings.Trim(phrase, " ")+"="+strings.Trim(pronun, " "))
 
 		start = pos + len(phrase) + 2
-		text = text[:pos] + " " + phrase + " " + text[endpos+len("））"):]
+		text = text[:pos] + " " + phrase + " " + text[endpos+elen:]
 
 		if len(text) <= start {
 			break
