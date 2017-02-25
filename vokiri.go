@@ -21,6 +21,7 @@ import (
 	"golang.org/x/text/transform"
 
 	"bitbucket.org/shu/log"
+	"bitbucket.org/shu/retry"
 	"github.com/lxn/win"
 )
 
@@ -168,7 +169,7 @@ func (v *Kiritan) Run() error {
 func (v *Kiritan) WaitForRun() bool {
 	log.Debug("VOICEROIDの起動を待っています。")
 
-	done := Wait(10*time.Second, WAIT_LONG, func() bool {
+	done := retry.Wait(10*time.Second, WAIT_LONG, func() bool {
 		if v.IsRunning() {
 			return true
 		}
@@ -194,7 +195,7 @@ func (v *Kiritan) waitForForeground() bool {
 	BringWindowToTop(v.WindowHandle)
 
 	first := true
-	done := Wait(time.Second, WAIT_SHORT, func() bool {
+	done := retry.Wait(time.Second, WAIT_SHORT, func() bool {
 		hwnd := GetForegroundWindow()
 		if hwnd == v.WindowHandle {
 			return true
@@ -228,7 +229,7 @@ func (v *Kiritan) waitForEnabled(hwnd syscall.Handle, wants bool, timeout, wait 
 		return false
 	}
 
-	done := Wait(timeout, wait, func() bool {
+	done := retry.Wait(timeout, wait, func() bool {
 		enabled := win.IsWindowEnabled(win.HWND(hwnd))
 		if wants && enabled || !wants && !enabled {
 			return true
@@ -242,7 +243,7 @@ func (v *Kiritan) saveToFile(dest string) error {
 	log.Debug("保存操作開始...")
 
 	var hdlg syscall.Handle
-	Wait(5*time.Second, WAIT_SHORT, func() bool {
+	retry.Wait(5*time.Second, WAIT_SHORT, func() bool {
 		hdlg = FindWindow("音声ファイルの保存")
 		if hdlg != 0 {
 			return true
@@ -254,7 +255,7 @@ func (v *Kiritan) saveToFile(dest string) error {
 	}
 
 	var filenameEdit syscall.Handle
-	Wait(5*time.Second, WAIT_SHORT, func() bool {
+	retry.Wait(5*time.Second, WAIT_SHORT, func() bool {
 		filenameEdit = FindChildWindowByClass(hdlg, "Edit", true)
 		if filenameEdit != 0 {
 			return true
@@ -269,7 +270,7 @@ func (v *Kiritan) saveToFile(dest string) error {
 	log.Debugf("    内容=%s", dest)
 
 	SetWindowText(filenameEdit, dest)
-	Wait(1*time.Second, WAIT_SHORT, func() bool {
+	retry.Wait(1*time.Second, WAIT_SHORT, func() bool {
 		d := GetWindowText(filenameEdit)
 		if d == dest {
 			return true
@@ -294,7 +295,7 @@ func (v *Kiritan) saveToFile(dest string) error {
 	log.Debug("  上書き保存の確認ダイアログボックスが出ていないか確認...")
 	var hmsg syscall.Handle
 	first := true
-	Wait(time.Second, WAIT_SHORT, func() bool {
+	retry.Wait(time.Second, WAIT_SHORT, func() bool {
 		hmsg = FindWindow("保存 確認")
 		if hmsg != 0 {
 			return true
@@ -317,7 +318,7 @@ func (v *Kiritan) saveToFile(dest string) error {
 		}
 	}
 
-	Wait(5*time.Second, WAIT_VERYSHORT, func() bool {
+	retry.Wait(5*time.Second, WAIT_VERYSHORT, func() bool {
 		hdlg = FindWindow("音声ファイルの保存")
 		if hdlg == 0 {
 			return true
@@ -484,7 +485,7 @@ func (v *Kiritan) ReloadPhraseDict(pEntries []string, persist bool) error {
 	win.PostMessage(win.HWND(v.WindowHandle), win.WM_SYSKEYDOWN, 'L', 1<<29|1)
 
 	var hdlg syscall.Handle
-	Wait(100*time.Millisecond, WAIT_VERYSHORT, func() bool {
+	retry.Wait(100*time.Millisecond, WAIT_VERYSHORT, func() bool {
 		hdlg = FindWindow("日本語辞書設定")
 		return hdlg != 0
 	})
@@ -525,7 +526,7 @@ func (v *Kiritan) ReloadPhraseDict(pEntries []string, persist bool) error {
 		log.Debug("フレーズ辞書のチェックボックスが見つかりませんでした。")
 	} else {
 		win.SendMessage(win.HWND(cb), win.BM_SETCHECK, win.BST_CHECKED, 0)
-		Wait(100*time.Millisecond, WAIT_VERYSHORT, func() bool {
+		retry.Wait(100*time.Millisecond, WAIT_VERYSHORT, func() bool {
 			return win.SendMessage(win.HWND(cb), win.BM_GETCHECK, 0, 0) == win.BST_CHECKED
 		})
 	}
@@ -537,7 +538,7 @@ func (v *Kiritan) ReloadPhraseDict(pEntries []string, persist bool) error {
 	win.SendMessage(win.HWND(okButton), win.BM_CLICK, 0, 0)
 
 	// wait for closed
-	Wait(time.Second, WAIT_SHORT, func() bool {
+	retry.Wait(time.Second, WAIT_SHORT, func() bool {
 		hdlg = FindWindow("日本語辞書設定")
 		return hdlg == 0
 	})

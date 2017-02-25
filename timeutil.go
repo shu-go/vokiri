@@ -10,6 +10,7 @@ const (
 	WAIT_LONG      = 1 * time.Second
 )
 
+/*
 func Wait(timeout, wait time.Duration, f func() bool) bool {
 	for {
 		done := f()
@@ -27,3 +28,4 @@ func Wait(timeout, wait time.Duration, f func() bool) bool {
 
 	return false
 }
+*/
