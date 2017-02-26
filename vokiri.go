@@ -201,7 +201,7 @@ func (v *Kiritan) Run() error {
 func (v *Kiritan) WaitForRun() bool {
 	log.Info("VOICEROIDの起動を待っています。")
 
-	done := retry.Wait(10*time.Second, WAIT_LONG, func() bool {
+	done := retry.Wait(20*time.Second, WAIT_LONG, func() bool {
 		if v.IsRunning() {
 			return true
 		}
