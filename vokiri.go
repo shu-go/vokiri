@@ -157,6 +157,38 @@ func (v *Kiritan) Rescan() {
 	}
 }
 
+func (v *Kiritan) Close() error {
+	if !v.IsRunning() {
+		return nil
+	}
+
+	log.Debug("終了操作開始...")
+
+	log.Debug("  操作可能になるまで待機")
+	v.WaitForSpeech()
+
+	log.Debug("  終了メッセージ送信")
+	win.PostMessage(win.HWND(v.WindowHandle), win.WM_CLOSE, 0, 0)
+
+	log.Debug("  終了の確認ダイアログボックスが出ていないか確認...")
+	var hmsg syscall.Handle
+	retry.Wait(3*time.Second, WAIT_SHORT, func() bool {
+		hmsg = FindWindow("注意")
+		if hmsg != 0 {
+			return true
+		}
+		return false
+	})
+	if hmsg != 0 {
+		yesButton := FindChildWindowByClass(hmsg, "BUTTON", false)
+		log.Debugf("      はいボタン=%X", yesButton)
+		if yesButton != 0 {
+			win.SendMessage(win.HWND(yesButton), win.BM_CLICK, 0, 0)
+		}
+	}
+	return nil
+}
+
 func (v *Kiritan) IsRunning() bool {
 	return v.WindowHandle != 0 && v.PlayButtonHandle != 0 && v.SaveButtonHandle != 0
 }

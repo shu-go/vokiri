@@ -29,6 +29,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "title", Value: "VOICEROID＋ 東北きりたん EX", Usage: "VOICEROIDのウィンドウタイトル(操作対象とみなすための条件)"},
 		cli.StringFlag{Name: "exe", Value: "", Usage: "VOICEROIDの実行パス"},
+		cli.BoolFlag{Name: "close", Usage: "実行後にVOICEROIDのウィンドウを終了させます"},
 		cli.StringFlag{Name: "record, r", Value: "", Usage: "保存先のWAVファイル名"},
 		cli.StringFlag{Name: "record-once", Value: "", Usage: "保存先のWAVファイル名(同名が存在する場合は何もしない)"},
 		cli.Float64Flag{Name: "volume, vol", Value: math.NaN(), Usage: "音声効果:音量"},
@@ -65,6 +66,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		exe := c.String("exe")
 		title := c.String("title")
+		klose := c.Bool("close")
 		record := c.String("record")
 		recordOnce := c.String("record-once")
 		volume := c.Float64("volume")
@@ -107,13 +109,13 @@ func main() {
 			}
 		}
 
-		return run(exe, title, record, recordOnce, volume, speed, pitch, emphasis, persist, text, phrase)
+		return run(exe, title, klose, record, recordOnce, volume, speed, pitch, emphasis, persist, text, phrase)
 	}
 	app.Run(os.Args)
 	return
 }
 
-func run(exe, title, record, recordOnce string, volume, speed, pitch, emphasis float64, persist bool, text, phrase string) error {
+func run(exe, title string, klose bool, record string, recordOnce string, volume, speed, pitch, emphasis float64, persist bool, text, phrase string) error {
 	var ips []string
 	if extracteds, aftertext, err := vokiri.ExtractInstantPhrases(text); err != nil {
 		return fmt.Errorf("インスタントフレーズの抽出に失敗しました(%q): %v", text, err)
@@ -238,6 +240,10 @@ func run(exe, title, record, recordOnce string, volume, speed, pitch, emphasis f
 		if !math.IsNaN(emphasis) {
 			kiri.SetEmphasis(orgEmphasis)
 		}
+	}
+
+	if klose {
+		kiri.Close()
 	}
 
 	return nil

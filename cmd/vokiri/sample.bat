@@ -130,7 +130,7 @@ rem
 vokiri --record-once="%DEST%omake_kwaii.wav" --pitch=2 --emphasis=2 ｷﾘﾀﾝｶﾜｲｲﾔｯﾀｰ　
 vokiri --record-once="%DEST%omake_seya.wav" --pitch=2 --emphasis=2 ｾﾔﾅｰ　
 
-vokiri おしまーーい！
+vokiri --close おしまーーい！
 
 dir /b *.wav > kiritan.m3u
 
