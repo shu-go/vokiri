@@ -25,7 +25,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "vokiri"
 	app.Usage = "VOICEROID＋ 東北きりたん をコマンドラインから操作します"
-	app.Version = "0.1.0"
+	app.Version = "0.2.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "title", Value: "VOICEROID＋ 東北きりたん EX", Usage: "VOICEROIDのウィンドウタイトル(操作対象とみなすための条件)"},
 		cli.StringFlag{Name: "exe", Value: "", Usage: "VOICEROIDの実行パス"},
