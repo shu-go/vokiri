@@ -29,6 +29,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "title", Value: "VOICEROID＋ 東北きりたん EX", Usage: "VOICEROIDのウィンドウタイトル(操作対象とみなすための条件)"},
 		cli.StringFlag{Name: "exe", Value: "", Usage: "VOICEROIDの実行パス"},
+		cli.BoolFlag{Name: "close", Usage: "実行後にVOICEROIDのウィンドウを終了させます"},
 		cli.StringFlag{Name: "record, r", Value: "", Usage: "保存先のWAVファイル名"},
 		cli.StringFlag{Name: "record-once", Value: "", Usage: "保存先のWAVファイル名(同名が存在する場合は何もしない)"},
 		cli.Float64Flag{Name: "volume, vol", Value: math.NaN(), Usage: "音声効果:音量"},
@@ -44,7 +45,7 @@ func main() {
 			Name: "test",
 			Action: func(c *cli.Context) error {
 
-				log.SetLevel(log.DebugFlag)
+				log.SetLevel(log.DebugLevel)
 
 				exe := `C:\Program Files (x86)\AHS\VOICEROID+\KiritanEX\VOICEROID.exe`
 				kiri := vokiri.New(exe, "VOICEROID＋ 東北きりたん EX")
@@ -65,6 +66,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		exe := c.String("exe")
 		title := c.String("title")
+		klose := c.Bool("close")
 		record := c.String("record")
 		recordOnce := c.String("record-once")
 		volume := c.Float64("volume")
@@ -77,7 +79,9 @@ func main() {
 		text := strings.Join(c.Args(), " ")
 
 		if c.Bool("debug") {
-			log.SetLevel(log.DebugFlag)
+			log.SetLevel(log.InfoLevel)
+		} else {
+			log.SetLevel(log.NilLevel)
 		}
 
 		if len(exe) == 0 {
@@ -107,13 +111,13 @@ func main() {
 			}
 		}
 
-		return run(exe, title, record, recordOnce, volume, speed, pitch, emphasis, persist, text, phrase)
+		return run(exe, title, klose, record, recordOnce, volume, speed, pitch, emphasis, persist, text, phrase)
 	}
 	app.Run(os.Args)
 	return
 }
 
-func run(exe, title, record, recordOnce string, volume, speed, pitch, emphasis float64, persist bool, text, phrase string) error {
+func run(exe, title string, klose bool, record string, recordOnce string, volume, speed, pitch, emphasis float64, persist bool, text, phrase string) error {
 	var ips []string
 	if extracteds, aftertext, err := vokiri.ExtractInstantPhrases(text); err != nil {
 		return fmt.Errorf("インスタントフレーズの抽出に失敗しました(%q): %v", text, err)
@@ -170,9 +174,9 @@ func run(exe, title, record, recordOnce string, volume, speed, pitch, emphasis f
 		}
 
 		if len(pp) != 0 {
-			log.Debugf("フレーズ (persist=%v)", persist)
+			log.Infof("フレーズ (persist=%v)", persist)
 			for _, p := range pp {
-				log.Debug(p)
+				log.Info(p)
 			}
 
 			if err := kiri.ReloadPhraseDict(pp, persist); err != nil {
@@ -238,6 +242,10 @@ func run(exe, title, record, recordOnce string, volume, speed, pitch, emphasis f
 		if !math.IsNaN(emphasis) {
 			kiri.SetEmphasis(orgEmphasis)
 		}
+	}
+
+	if klose {
+		kiri.Close()
 	}
 
 	return nil
