@@ -45,7 +45,7 @@ func main() {
 			Name: "test",
 			Action: func(c *cli.Context) error {
 
-				log.SetLevel(log.DebugFlag)
+				log.SetLevel(log.DebugLevel)
 
 				exe := `C:\Program Files (x86)\AHS\VOICEROID+\KiritanEX\VOICEROID.exe`
 				kiri := vokiri.New(exe, "VOICEROID＋ 東北きりたん EX")
@@ -79,7 +79,9 @@ func main() {
 		text := strings.Join(c.Args(), " ")
 
 		if c.Bool("debug") {
-			log.SetLevel(log.DebugFlag)
+			log.SetLevel(log.InfoLevel)
+		} else {
+			log.SetLevel(log.NilLevel)
 		}
 
 		if len(exe) == 0 {
@@ -172,9 +174,9 @@ func run(exe, title string, klose bool, record string, recordOnce string, volume
 		}
 
 		if len(pp) != 0 {
-			log.Debugf("フレーズ (persist=%v)", persist)
+			log.Infof("フレーズ (persist=%v)", persist)
 			for _, p := range pp {
-				log.Debug(p)
+				log.Info(p)
 			}
 
 			if err := kiri.ReloadPhraseDict(pp, persist); err != nil {
