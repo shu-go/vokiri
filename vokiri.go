@@ -66,17 +66,17 @@ func (v *Kiritan) Rescan() {
 	v.EmphasisEditHandle = 0
 	v.TabHandle = 0
 
-	log.Debugf("VOICEROIDのウィンドウを確認...(%q)", v.WindowTitle)
+	log.Infof("VOICEROIDのウィンドウを確認...(%q)", v.WindowTitle)
 	v.WindowHandle = FindWindow(v.WindowTitle)
 	if v.WindowHandle == 0 {
-		log.Debug("  現時点では見つかりませんでした。今回のスキャンはこれで打ち切ります。")
+		log.Info("  現時点では見つかりませんでした。今回のスキャンはこれで打ち切ります。")
 		return
 	} else {
-		log.Debugf("  ウィンドウハンドル=%X", v.WindowHandle)
-		log.Debug("  起動が確認できました。")
+		log.Infof("  ウィンドウハンドル=%X", v.WindowHandle)
+		log.Info("  起動が確認できました。")
 	}
 
-	log.Debug("ウィンドウ中のコントロールから、操作に必要なものを検索...")
+	log.Info("ウィンドウ中のコントロールから、操作に必要なものを検索...")
 
 	EnumChildWindows(v.WindowHandle, func(hwnd syscall.Handle, _ uintptr) uintptr {
 		title := GetWindowText(hwnd)
@@ -101,18 +101,18 @@ func (v *Kiritan) Rescan() {
 	}, 0)
 
 	if v.PlayButtonHandle != 0 {
-		log.Debugf("  再生ボタン=%X", v.PlayButtonHandle)
-		log.Debug("  再生ボタンが見つかりました。")
+		log.Infof("  再生ボタン=%X", v.PlayButtonHandle)
+		log.Info("  再生ボタンが見つかりました。")
 	}
 	if v.SaveButtonHandle != 0 {
-		log.Debugf("  音声保存ボタン=%x", v.SaveButtonHandle)
-		log.Debug("  音声保存ボタンが見つかりました。")
+		log.Infof("  音声保存ボタン=%x", v.SaveButtonHandle)
+		log.Info("  音声保存ボタンが見つかりました。")
 	}
 
-	log.Debugf("(オプション)音声効果をふくむタブ=%X", v.TabHandle)
+	log.Infof("(オプション)音声効果をふくむタブ=%X", v.TabHandle)
 
 	if v.TabHandle != 0 {
-		log.Debug("音声効果をふくむタブが見つかったので、各種パラメーターのテキストボックスを検索...")
+		log.Info("音声効果をふくむタブが見つかったので、各種パラメーターのテキストボックスを検索...")
 
 		var edits [4]syscall.Handle
 		ei := 0
@@ -144,15 +144,15 @@ func (v *Kiritan) Rescan() {
 		v.PitchEditHandle = edits[1]
 		v.EmphasisEditHandle = edits[0]
 
-		log.Debugf("  音量=%X", v.VolumeEditHandle)
-		log.Debugf("  話速=%X", v.SpeedEditHandle)
-		log.Debugf("  高さ=%X", v.PitchEditHandle)
-		log.Debugf("  抑揚=%X", v.EmphasisEditHandle)
+		log.Infof("  音量=%X", v.VolumeEditHandle)
+		log.Infof("  話速=%X", v.SpeedEditHandle)
+		log.Infof("  高さ=%X", v.PitchEditHandle)
+		log.Infof("  抑揚=%X", v.EmphasisEditHandle)
 
 		if v.VolumeEditHandle != 0 && v.SpeedEditHandle != 0 && v.PitchEditHandle != 0 && v.EmphasisEditHandle != 0 {
-			log.Debug("  音声効果の各種パラメーターの指定が利用可能です。")
+			log.Info("  音声効果の各種パラメーターの指定が利用可能です。")
 		} else {
-			log.Debug("  音声効果の各種パラメーターのテキストボックスが見つかりませんでした。＊現時点では＊利用できません。")
+			log.Info("  音声効果の各種パラメーターのテキストボックスが見つかりませんでした。＊現時点では＊利用できません。")
 		}
 	}
 }
@@ -162,15 +162,15 @@ func (v *Kiritan) Close() error {
 		return nil
 	}
 
-	log.Debug("終了操作開始...")
+	log.Info("終了操作開始...")
 
-	log.Debug("  操作可能になるまで待機")
+	log.Info("  操作可能になるまで待機")
 	v.WaitForSpeech()
 
-	log.Debug("  終了メッセージ送信")
+	log.Info("  終了メッセージ送信")
 	win.PostMessage(win.HWND(v.WindowHandle), win.WM_CLOSE, 0, 0)
 
-	log.Debug("  終了の確認ダイアログボックスが出ていないか確認...")
+	log.Info("  終了の確認ダイアログボックスが出ていないか確認...")
 	var hmsg syscall.Handle
 	retry.Wait(3*time.Second, WAIT_SHORT, func() bool {
 		hmsg = FindWindow("注意")
@@ -181,7 +181,7 @@ func (v *Kiritan) Close() error {
 	})
 	if hmsg != 0 {
 		yesButton := FindChildWindowByClass(hmsg, "BUTTON", false)
-		log.Debugf("      はいボタン=%X", yesButton)
+		log.Infof("      はいボタン=%X", yesButton)
 		if yesButton != 0 {
 			win.SendMessage(win.HWND(yesButton), win.BM_CLICK, 0, 0)
 		}
@@ -199,7 +199,7 @@ func (v *Kiritan) Run() error {
 }
 
 func (v *Kiritan) WaitForRun() bool {
-	log.Debug("VOICEROIDの起動を待っています。")
+	log.Info("VOICEROIDの起動を待っています。")
 
 	done := retry.Wait(10*time.Second, WAIT_LONG, func() bool {
 		if v.IsRunning() {
@@ -213,14 +213,14 @@ func (v *Kiritan) WaitForRun() bool {
 		return true
 	}
 
-	log.Debug("規定時間内に起動を確認できませんでした。")
+	log.Info("規定時間内に起動を確認できませんでした。")
 
 	return false
 }
 
 func (v *Kiritan) waitForForeground() bool {
 	if v.WindowHandle == 0 {
-		log.Debug("VOICEROIDが起動していません。")
+		log.Info("VOICEROIDが起動していません。")
 		return false
 	}
 
@@ -272,7 +272,7 @@ func (v *Kiritan) waitForEnabled(hwnd syscall.Handle, wants bool, timeout, wait 
 }
 
 func (v *Kiritan) saveToFile(dest string) error {
-	log.Debug("保存操作開始...")
+	log.Info("保存操作開始...")
 
 	var hdlg syscall.Handle
 	retry.Wait(5*time.Second, WAIT_SHORT, func() bool {
@@ -298,8 +298,8 @@ func (v *Kiritan) saveToFile(dest string) error {
 		return fmt.Errorf("音声ファイルの保存ダイアログボックスで、ファイル名テキストボックスが見つかりませんでした。")
 	}
 
-	log.Debugf("  ファイル名テキストボックス=%X", filenameEdit)
-	log.Debugf("    内容=%s", dest)
+	log.Infof("  ファイル名テキストボックス=%X", filenameEdit)
+	log.Infof("    内容=%s", dest)
 
 	SetWindowText(filenameEdit, dest)
 	retry.Wait(1*time.Second, WAIT_SHORT, func() bool {
@@ -316,15 +316,15 @@ func (v *Kiritan) saveToFile(dest string) error {
 		return fmt.Errorf("音声ファイルの保存ダイアログボックスで、保存ボタンが見つかりませんでした。")
 	}
 	defButton := GetDlgItem(hdlg, defButtonID)
-	log.Debugf("  保存ボタン=%X", defButton)
+	log.Infof("  保存ボタン=%X", defButton)
 	if defButton == 0 {
 		return fmt.Errorf("音声ファイルの保存ダイアログボックスで、保存ボタンが見つかりませんでした。")
 	}
 
-	log.Debug("  保存ボタン押下")
+	log.Info("  保存ボタン押下")
 	win.PostMessage(win.HWND(defButton), win.BM_CLICK, 0, 0)
 
-	log.Debug("  上書き保存の確認ダイアログボックスが出ていないか確認...")
+	log.Info("  上書き保存の確認ダイアログボックスが出ていないか確認...")
 	var hmsg syscall.Handle
 	first := true
 	retry.Wait(time.Second, WAIT_SHORT, func() bool {
@@ -341,10 +341,10 @@ func (v *Kiritan) saveToFile(dest string) error {
 		first = false
 		return false
 	})
-	log.Debugf("    確認ダイアログボックス=%X", hmsg)
+	log.Infof("    確認ダイアログボックス=%X", hmsg)
 	if hmsg != 0 {
 		yesButton := FindChildWindowByClass(hmsg, "BUTTON", false)
-		log.Debugf("      はいボタン=%X", yesButton)
+		log.Infof("      はいボタン=%X", yesButton)
 		if yesButton != 0 {
 			win.SendMessage(win.HWND(yesButton), win.BM_CLICK, 0, 0)
 		}
@@ -362,7 +362,7 @@ func (v *Kiritan) saveToFile(dest string) error {
 }
 
 func (v *Kiritan) SetVolume(vol float64) error {
-	log.Debugf("音量->%.2f", vol)
+	log.Infof("音量->%.2f", vol)
 
 	if v.VolumeEditHandle == 0 {
 		return fmt.Errorf("音量テキストボックスが見つかりませんでした。")
@@ -372,7 +372,7 @@ func (v *Kiritan) SetVolume(vol float64) error {
 }
 
 func (v *Kiritan) SetSpeed(s float64) error {
-	log.Debugf("話速->%.2f", s)
+	log.Infof("話速->%.2f", s)
 
 	if v.SpeedEditHandle == 0 {
 		return fmt.Errorf("話速テキストボックスが見つかりませんでした。")
@@ -382,7 +382,7 @@ func (v *Kiritan) SetSpeed(s float64) error {
 }
 
 func (v *Kiritan) SetPitch(p float64) error {
-	log.Debugf("高さ->%.2f", p)
+	log.Infof("高さ->%.2f", p)
 
 	if v.PitchEditHandle == 0 {
 		return fmt.Errorf("高さテキストボックスが見つかりませんでした。")
@@ -392,7 +392,7 @@ func (v *Kiritan) SetPitch(p float64) error {
 }
 
 func (v *Kiritan) SetEmphasis(i float64) error {
-	log.Debugf("抑揚->%.2f", i)
+	log.Infof("抑揚->%.2f", i)
 
 	if v.EmphasisEditHandle == 0 {
 		return fmt.Errorf("抑揚テキストボックスが見つかりませんでした。")
@@ -444,7 +444,7 @@ func (v *Kiritan) getParameterEditBox(hwnd syscall.Handle) float64 {
 }
 
 func (v *Kiritan) Speak(s string) error {
-	log.Debugf("読み上げ「%s」", s)
+	log.Infof("読み上げ「%s」", s)
 
 	if v.REditHandle == 0 {
 		return fmt.Errorf("テキストボックスが見つかりませんでした。")
@@ -475,7 +475,7 @@ func (v *Kiritan) Speak(s string) error {
 }
 
 func (v *Kiritan) Record(s, dest string) error {
-	log.Debugf("録音「%s」=> %q", s, dest)
+	log.Infof("録音「%s」=> %q", s, dest)
 
 	if v.REditHandle == 0 {
 		return fmt.Errorf("テキストボックスが見つかりませんでした。")
@@ -555,7 +555,7 @@ func (v *Kiritan) ReloadPhraseDict(pEntries []string, persist bool) error {
 
 	cb := FindChildWindowByText(hdlg, "フレーズ辞書", false)
 	if cb == 0 {
-		log.Debug("フレーズ辞書のチェックボックスが見つかりませんでした。")
+		log.Info("フレーズ辞書のチェックボックスが見つかりませんでした。")
 	} else {
 		win.SendMessage(win.HWND(cb), win.BM_SETCHECK, win.BST_CHECKED, 0)
 		retry.Wait(100*time.Millisecond, WAIT_VERYSHORT, func() bool {
