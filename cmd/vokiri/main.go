@@ -17,8 +17,8 @@ import (
 	"github.com/andrew-d/go-termutil"
 	"github.com/urfave/cli"
 
-	"bitbucket.org/shu/log"
-	"bitbucket.org/shu/vokiri"
+	"bitbucket.org/shu_go/rog"
+	"bitbucket.org/shu_go/vokiri"
 )
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 			Name: "test",
 			Action: func(c *cli.Context) error {
 
-				log.SetLevel(log.DebugLevel)
+				rog.EnableDebug()
 
 				exe := `C:\Program Files (x86)\AHS\VOICEROID+\KiritanEX\VOICEROID.exe`
 				kiri := vokiri.New(exe, "VOICEROID＋ 東北きりたん EX")
@@ -79,9 +79,7 @@ func main() {
 		text := strings.Join(c.Args(), " ")
 
 		if c.Bool("debug") {
-			log.SetLevel(log.InfoLevel)
-		} else {
-			log.SetLevel(log.NilLevel)
+			rog.EnableDebug()
 		}
 
 		if len(exe) == 0 {
@@ -174,9 +172,9 @@ func run(exe, title string, klose bool, record string, recordOnce string, volume
 		}
 
 		if len(pp) != 0 {
-			log.Infof("フレーズ (persist=%v)", persist)
+			rog.Debug("フレーズ (persist=%v)", persist)
 			for _, p := range pp {
-				log.Info(p)
+				rog.Debug(p)
 			}
 
 			if err := kiri.ReloadPhraseDict(pp, persist); err != nil {
