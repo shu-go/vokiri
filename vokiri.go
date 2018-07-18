@@ -20,8 +20,8 @@ import (
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 
-	"bitbucket.org/shu/log"
-	"bitbucket.org/shu/retry"
+	"bitbucket.org/shu_go/retry"
+	"bitbucket.org/shu_go/rog"
 	"github.com/lxn/win"
 )
 
@@ -66,23 +66,23 @@ func (v *Kiritan) Rescan() {
 	v.EmphasisEditHandle = 0
 	v.TabHandle = 0
 
-	log.Infof("VOICEROIDのウィンドウを確認...(%q)", v.WindowTitle)
+	rog.Debug("VOICEROIDのウィンドウを確認...(%q)", v.WindowTitle)
 	v.WindowHandle = FindWindow(v.WindowTitle)
 	if v.WindowHandle == 0 {
-		log.Info("  現時点では見つかりませんでした。今回のスキャンはこれで打ち切ります。")
+		rog.Debug("  現時点では見つかりませんでした。今回のスキャンはこれで打ち切ります。")
 		return
 	} else {
-		log.Infof("  ウィンドウハンドル=%X", v.WindowHandle)
-		log.Info("  起動が確認できました。")
+		rog.Debug("  ウィンドウハンドル=%X", v.WindowHandle)
+		rog.Debug("  起動が確認できました。")
 	}
 
-	log.Info("ウィンドウ中のコントロールから、操作に必要なものを検索...")
+	rog.Debug("ウィンドウ中のコントロールから、操作に必要なものを検索...")
 
 	EnumChildWindows(v.WindowHandle, func(hwnd syscall.Handle, _ uintptr) uintptr {
 		title := GetWindowText(hwnd)
 		class := strings.ToUpper(GetClassName(hwnd))
 
-		//log.Debug(hwnd, "Class:", class, "Title:", title)
+		//rog.Debug(hwnd, "Class:", class, "Title:", title)
 
 		if v.REditHandle == 0 && strings.Contains(class, "RICHEDIT") {
 			// first RichEdit
@@ -101,18 +101,18 @@ func (v *Kiritan) Rescan() {
 	}, 0)
 
 	if v.PlayButtonHandle != 0 {
-		log.Infof("  再生ボタン=%X", v.PlayButtonHandle)
-		log.Info("  再生ボタンが見つかりました。")
+		rog.Debug("  再生ボタン=%X", v.PlayButtonHandle)
+		rog.Debug("  再生ボタンが見つかりました。")
 	}
 	if v.SaveButtonHandle != 0 {
-		log.Infof("  音声保存ボタン=%x", v.SaveButtonHandle)
-		log.Info("  音声保存ボタンが見つかりました。")
+		rog.Debug("  音声保存ボタン=%x", v.SaveButtonHandle)
+		rog.Debug("  音声保存ボタンが見つかりました。")
 	}
 
-	log.Infof("(オプション)音声効果をふくむタブ=%X", v.TabHandle)
+	rog.Debug("(オプション)音声効果をふくむタブ=%X", v.TabHandle)
 
 	if v.TabHandle != 0 {
-		log.Info("音声効果をふくむタブが見つかったので、各種パラメーターのテキストボックスを検索...")
+		rog.Debug("音声効果をふくむタブが見つかったので、各種パラメーターのテキストボックスを検索...")
 
 		var edits [4]syscall.Handle
 		ei := 0
@@ -144,15 +144,15 @@ func (v *Kiritan) Rescan() {
 		v.PitchEditHandle = edits[1]
 		v.EmphasisEditHandle = edits[0]
 
-		log.Infof("  音量=%X", v.VolumeEditHandle)
-		log.Infof("  話速=%X", v.SpeedEditHandle)
-		log.Infof("  高さ=%X", v.PitchEditHandle)
-		log.Infof("  抑揚=%X", v.EmphasisEditHandle)
+		rog.Debug("  音量=%X", v.VolumeEditHandle)
+		rog.Debug("  話速=%X", v.SpeedEditHandle)
+		rog.Debug("  高さ=%X", v.PitchEditHandle)
+		rog.Debug("  抑揚=%X", v.EmphasisEditHandle)
 
 		if v.VolumeEditHandle != 0 && v.SpeedEditHandle != 0 && v.PitchEditHandle != 0 && v.EmphasisEditHandle != 0 {
-			log.Info("  音声効果の各種パラメーターの指定が利用可能です。")
+			rog.Debug("  音声効果の各種パラメーターの指定が利用可能です。")
 		} else {
-			log.Info("  音声効果の各種パラメーターのテキストボックスが見つかりませんでした。＊現時点では＊利用できません。")
+			rog.Debug("  音声効果の各種パラメーターのテキストボックスが見つかりませんでした。＊現時点では＊利用できません。")
 		}
 	}
 }
@@ -162,15 +162,15 @@ func (v *Kiritan) Close() error {
 		return nil
 	}
 
-	log.Info("終了操作開始...")
+	rog.Debug("終了操作開始...")
 
-	log.Info("  操作可能になるまで待機")
+	rog.Debug("  操作可能になるまで待機")
 	v.WaitForSpeech()
 
-	log.Info("  終了メッセージ送信")
+	rog.Debug("  終了メッセージ送信")
 	win.PostMessage(win.HWND(v.WindowHandle), win.WM_CLOSE, 0, 0)
 
-	log.Info("  終了の確認ダイアログボックスが出ていないか確認...")
+	rog.Debug("  終了の確認ダイアログボックスが出ていないか確認...")
 	var hmsg syscall.Handle
 	retry.Wait(3*time.Second, WAIT_SHORT, func() bool {
 		hmsg = FindWindow("注意")
@@ -181,7 +181,7 @@ func (v *Kiritan) Close() error {
 	})
 	if hmsg != 0 {
 		yesButton := FindChildWindowByClass(hmsg, "BUTTON", false)
-		log.Infof("      はいボタン=%X", yesButton)
+		rog.Debug("      はいボタン=%X", yesButton)
 		if yesButton != 0 {
 			win.SendMessage(win.HWND(yesButton), win.BM_CLICK, 0, 0)
 		}
@@ -199,7 +199,7 @@ func (v *Kiritan) Run() error {
 }
 
 func (v *Kiritan) WaitForRun() bool {
-	log.Info("VOICEROIDの起動を待っています。")
+	rog.Debug("VOICEROIDの起動を待っています。")
 
 	done := retry.Wait(20*time.Second, WAIT_LONG, func() bool {
 		if v.IsRunning() {
@@ -213,14 +213,14 @@ func (v *Kiritan) WaitForRun() bool {
 		return true
 	}
 
-	log.Info("規定時間内に起動を確認できませんでした。")
+	rog.Debug("規定時間内に起動を確認できませんでした。")
 
 	return false
 }
 
 func (v *Kiritan) waitForForeground() bool {
 	if v.WindowHandle == 0 {
-		log.Info("VOICEROIDが起動していません。")
+		rog.Debug("VOICEROIDが起動していません。")
 		return false
 	}
 
@@ -272,7 +272,7 @@ func (v *Kiritan) waitForEnabled(hwnd syscall.Handle, wants bool, timeout, wait 
 }
 
 func (v *Kiritan) saveToFile(dest string) error {
-	log.Info("保存操作開始...")
+	rog.Debug("保存操作開始...")
 
 	var hdlg syscall.Handle
 	retry.Wait(5*time.Second, WAIT_SHORT, func() bool {
@@ -298,8 +298,8 @@ func (v *Kiritan) saveToFile(dest string) error {
 		return fmt.Errorf("音声ファイルの保存ダイアログボックスで、ファイル名テキストボックスが見つかりませんでした。")
 	}
 
-	log.Infof("  ファイル名テキストボックス=%X", filenameEdit)
-	log.Infof("    内容=%s", dest)
+	rog.Debug("  ファイル名テキストボックス=%X", filenameEdit)
+	rog.Debug("    内容=%s", dest)
 
 	SetWindowText(filenameEdit, dest)
 	retry.Wait(1*time.Second, WAIT_SHORT, func() bool {
@@ -316,15 +316,15 @@ func (v *Kiritan) saveToFile(dest string) error {
 		return fmt.Errorf("音声ファイルの保存ダイアログボックスで、保存ボタンが見つかりませんでした。")
 	}
 	defButton := GetDlgItem(hdlg, defButtonID)
-	log.Infof("  保存ボタン=%X", defButton)
+	rog.Debug("  保存ボタン=%X", defButton)
 	if defButton == 0 {
 		return fmt.Errorf("音声ファイルの保存ダイアログボックスで、保存ボタンが見つかりませんでした。")
 	}
 
-	log.Info("  保存ボタン押下")
+	rog.Debug("  保存ボタン押下")
 	win.PostMessage(win.HWND(defButton), win.BM_CLICK, 0, 0)
 
-	log.Info("  上書き保存の確認ダイアログボックスが出ていないか確認...")
+	rog.Debug("  上書き保存の確認ダイアログボックスが出ていないか確認...")
 	var hmsg syscall.Handle
 	first := true
 	retry.Wait(time.Second, WAIT_SHORT, func() bool {
@@ -341,10 +341,10 @@ func (v *Kiritan) saveToFile(dest string) error {
 		first = false
 		return false
 	})
-	log.Infof("    確認ダイアログボックス=%X", hmsg)
+	rog.Debug("    確認ダイアログボックス=%X", hmsg)
 	if hmsg != 0 {
 		yesButton := FindChildWindowByClass(hmsg, "BUTTON", false)
-		log.Infof("      はいボタン=%X", yesButton)
+		rog.Debug("      はいボタン=%X", yesButton)
 		if yesButton != 0 {
 			win.SendMessage(win.HWND(yesButton), win.BM_CLICK, 0, 0)
 		}
@@ -362,7 +362,7 @@ func (v *Kiritan) saveToFile(dest string) error {
 }
 
 func (v *Kiritan) SetVolume(vol float64) error {
-	log.Infof("音量->%.2f", vol)
+	rog.Debug("音量->%.2f", vol)
 
 	if v.VolumeEditHandle == 0 {
 		return fmt.Errorf("音量テキストボックスが見つかりませんでした。")
@@ -372,7 +372,7 @@ func (v *Kiritan) SetVolume(vol float64) error {
 }
 
 func (v *Kiritan) SetSpeed(s float64) error {
-	log.Infof("話速->%.2f", s)
+	rog.Debug("話速->%.2f", s)
 
 	if v.SpeedEditHandle == 0 {
 		return fmt.Errorf("話速テキストボックスが見つかりませんでした。")
@@ -382,7 +382,7 @@ func (v *Kiritan) SetSpeed(s float64) error {
 }
 
 func (v *Kiritan) SetPitch(p float64) error {
-	log.Infof("高さ->%.2f", p)
+	rog.Debug("高さ->%.2f", p)
 
 	if v.PitchEditHandle == 0 {
 		return fmt.Errorf("高さテキストボックスが見つかりませんでした。")
@@ -392,7 +392,7 @@ func (v *Kiritan) SetPitch(p float64) error {
 }
 
 func (v *Kiritan) SetEmphasis(i float64) error {
-	log.Infof("抑揚->%.2f", i)
+	rog.Debug("抑揚->%.2f", i)
 
 	if v.EmphasisEditHandle == 0 {
 		return fmt.Errorf("抑揚テキストボックスが見つかりませんでした。")
@@ -444,7 +444,7 @@ func (v *Kiritan) getParameterEditBox(hwnd syscall.Handle) float64 {
 }
 
 func (v *Kiritan) Speak(s string) error {
-	log.Infof("読み上げ「%s」", s)
+	rog.Debug("読み上げ「%s」", s)
 
 	if v.REditHandle == 0 {
 		return fmt.Errorf("テキストボックスが見つかりませんでした。")
@@ -466,7 +466,7 @@ func (v *Kiritan) Speak(s string) error {
 
 	time.Sleep(WAIT_SHORT)
 
-	//log.Debug(v.PDictPath)
+	//rog.Debug(v.PDictPath)
 	if len(v.PDictPath) > 0 {
 		v.InjectPhraseEntries(nil)
 	}
@@ -475,7 +475,7 @@ func (v *Kiritan) Speak(s string) error {
 }
 
 func (v *Kiritan) Record(s, dest string) error {
-	log.Infof("録音「%s」=> %q", s, dest)
+	rog.Debug("録音「%s」=> %q", s, dest)
 
 	if v.REditHandle == 0 {
 		return fmt.Errorf("テキストボックスが見つかりませんでした。")
@@ -530,7 +530,7 @@ func (v *Kiritan) ReloadPhraseDict(pEntries []string, persist bool) error {
 		title := strings.ToUpper(GetWindowText(hwnd))
 		class := strings.ToUpper(GetClassName(hwnd))
 
-		//log.Debug(hwnd, class, title)
+		//rog.Debug(hwnd, class, title)
 		if strings.Contains(title, ".PDIC") && strings.Contains(class, "EDIT") {
 			pdictEdit = hwnd
 			return 0
@@ -555,7 +555,7 @@ func (v *Kiritan) ReloadPhraseDict(pEntries []string, persist bool) error {
 
 	cb := FindChildWindowByText(hdlg, "フレーズ辞書", false)
 	if cb == 0 {
-		log.Info("フレーズ辞書のチェックボックスが見つかりませんでした。")
+		rog.Debug("フレーズ辞書のチェックボックスが見つかりませんでした。")
 	} else {
 		win.SendMessage(win.HWND(cb), win.BM_SETCHECK, win.BST_CHECKED, 0)
 		retry.Wait(100*time.Millisecond, WAIT_VERYSHORT, func() bool {
@@ -629,7 +629,7 @@ func (v *Kiritan) InjectPhraseEntries(pEntries []string) error {
 		}
 		s, p := pair[0], pair[1]
 		if p != "" {
-			//log.Debug(fmt.Sprintf("num:%d\r\n%s\r\n$2_2%s$2_2\r\n", 1000+i, s, v.CompilePhonation(p)))
+			//rog.Debug(fmt.Sprintf("num:%d\r\n%s\r\n$2_2%s$2_2\r\n", 1000+i, s, v.CompilePhonation(p)))
 			buff.Write([]byte(fmt.Sprintf("num:%d\r\n%s\r\n$2_2%s$2_2\r\n", 1000+i, s, v.CompilePhonation(p))))
 		}
 	}
@@ -652,21 +652,21 @@ var (
 func ExtractInstantPhrases(text string) (pEntries []string, after string, err error) {
 	var start int
 	for {
-		//log.Debug("text", text)
-		//log.Debug("start", start)
+		//rog.Debug("text", text)
+		//rog.Debug("start", start)
 		spos, slen := indexAnyAry(text[start:], instPhraseStart)
 		pos := start + spos
 		if pos < start {
 			break
 		}
-		//log.Debug("pos", pos)
+		//rog.Debug("pos", pos)
 
 		epos, elen := indexAnyAry(text[pos:], instPhraseEnd)
 		endpos := pos + epos
 		if endpos < pos {
 			break
 		}
-		//log.Debug("endpos", endpos)
+		//rog.Debug("endpos", endpos)
 
 		seppos, seplen := indexAnyAry(text[pos:endpos], instPhraseSep)
 		seppos = pos + seppos
@@ -674,11 +674,11 @@ func ExtractInstantPhrases(text string) (pEntries []string, after string, err er
 			start = endpos
 			continue
 		}
-		//log.Debug("seppos", seppos)
+		//rog.Debug("seppos", seppos)
 
 		phrase := text[pos+slen : seppos]
 		pronun := text[seppos+seplen : endpos]
-		//log.Debug("phrase, pronun", phrase, pronun)
+		//rog.Debug("phrase, pronun", phrase, pronun)
 		pEntries = append(pEntries, strings.Trim(phrase, " ")+"="+strings.Trim(pronun, " "))
 
 		start = pos + len(phrase) + 2
@@ -828,25 +828,25 @@ func init() {
 }
 
 func (v *Kiritan) CompilePhonation(p string) string {
-	//log.Debug(p)
+	//rog.Debug(p)
 	p = vol.ReplaceAllString(p, "(Vol ABSLEVEL=$1)")
 	p = spd.ReplaceAllString(p, "(Spd ABSSPEED=$1)")
 	p = pit.ReplaceAllString(p, "(Pit ABSLEVEL=$1)")
 	p = emph.ReplaceAllString(p, "(EMPH ABSLEVEL=$1)")
-	//log.Debug(p)
+	//rog.Debug(p)
 	return p
 }
 
 func (v *Kiritan) Test() {
-	log.Debug("==================================================")
+	rog.Debug("==================================================")
 
 	text := "皆さん、（（こんにちは｜コ!ンニチ|ワー））"
 	if pEntries, after, err := ExtractInstantPhrases(text); err != nil {
-		log.Debug(err)
+		rog.Debug(err)
 		return
 	} else {
-		log.Debug(text)
-		log.Debug("  ", after)
-		log.Debug("  ", pEntries)
+		rog.Debug(text)
+		rog.Debug("  ", after)
+		rog.Debug("  ", pEntries)
 	}
 }

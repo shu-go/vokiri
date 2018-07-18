@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"bitbucket.org/shu/log"
+	"bitbucket.org/shu_go/rog"
 	"github.com/lxn/win"
 )
 
@@ -120,11 +120,11 @@ func PushButton(hwnd syscall.Handle) {
 func ChangeTab(hwnd syscall.Handle, index uintptr) {
 	i := win.SendMessage(win.HWND(hwnd), win.TCM_SETCURSEL, index, 0)
 	if i == 0xffffffff {
-		log.Debug("TCM_SETCURSEL", i)
+		rog.Debug("TCM_SETCURSEL", i)
 	}
 	i = win.SendMessage(win.HWND(hwnd), win.TCM_SETCURFOCUS, index, 0)
 	if i == 0xffffffff {
-		log.Debug("TCM_SETCURFOCUS", i)
+		rog.Debug("TCM_SETCURFOCUS", i)
 	}
 }
 
@@ -142,7 +142,7 @@ func FindWindow(patterns string) syscall.Handle {
 			}
 		}
 		if matches {
-			//log.Debug(title)
+			//rog.Debug(title)
 			handle = hwnd
 			return 0
 		}
