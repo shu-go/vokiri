@@ -7,8 +7,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	"bitbucket.org/shu_go/rog"
 	"github.com/lxn/win"
+	"github.com/shu-go/rog"
 )
 
 var (

@@ -17,8 +17,8 @@ import (
 	"github.com/andrew-d/go-termutil"
 	"github.com/urfave/cli"
 
-	"bitbucket.org/shu_go/rog"
-	"bitbucket.org/shu_go/vokiri"
+	"github.com/shu-go/rog"
+	"github.com/shu-go/vokiri"
 )
 
 func main() {

@@ -20,9 +20,9 @@ import (
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 
-	"bitbucket.org/shu_go/retry"
-	"bitbucket.org/shu_go/rog"
 	"github.com/lxn/win"
+	"github.com/shu-go/retry"
+	"github.com/shu-go/rog"
 )
 
 type Kiritan struct {
